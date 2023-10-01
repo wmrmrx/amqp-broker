@@ -12,11 +12,13 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <unistd.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <stdatomic.h>
+#include "amqp_queue.h"
+#include "util.h"
 
-#define LISTENQ 1
-#define MAXDATASIZE 100
-#define MAXLINE 4096
-
-void handle(int connfd);
+// Handles a connection
+void* handle(void* args);
 
 #endif

@@ -40,9 +40,11 @@
 #include <time.h>
 #include <unistd.h>
 
-// EP1
+// ALTERAÇÃO EP1
+#include <stdatomic.h>
+#include <pthread.h>
 #include "handler.h"
-// FIM EP1
+// FIM DA ALTERAÇÃO EP1
 
 #define LISTENQ 1
 #define MAXDATASIZE 100
@@ -56,16 +58,6 @@ int main (int argc, char **argv) {
     /* Informações sobre o socket (endereço e porta) ficam nesta struct
      */
     struct sockaddr_in servaddr;
-    /* Retorno da função fork para saber quem é o processo filho e
-     * quem é o processo pai
-     */
-    pid_t childpid;
-    /* Armazena linhas recebidas do cliente
-     */
-    char recvline[MAXLINE + 1];
-    /* Armazena o tamanho da string lida do cliente
-     */
-    ssize_t n;
    
     if (argc != 2) {
         fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
@@ -124,76 +116,25 @@ int main (int argc, char **argv) {
     /* O servidor no final das contas é um loop infinito de espera por
      * conexões e processamento de cada uma individualmente
      */
+
+    // ALTERAÇÃO EP1
+    const size_t MAX_QUEUES = 1024;
+    atomic_size_t num_queues;
+    atomic_init(&num_queues, 0);
+    struct amqp_queue* queues = calloc(MAX_QUEUES, sizeof(struct amqp_queue));
+
     for (;;) {
-        /* O socket inicial que foi criado é o socket que vai aguardar
-         * pela conexão na porta especificada. Mas pode ser que existam
-         * diversos clientes conectando no servidor. Por isso deve-se
-         * utilizar a função accept. Esta função vai retirar uma conexão
-         * da fila de conexões que foram aceitas no socket listenfd e
-         * vai criar um socket específico para esta conexão. O descritor
-         * deste novo socket é o retorno da função accept.
-         */
         if ((connfd = accept(listenfd, (struct sockaddr *) NULL, NULL)) == -1 ) {
             perror("accept :(\n");
             exit(5);
         }
-      
-        /* Agora o servidor precisa tratar este cliente de forma
-         * separada. Para isto é criado um processo filho usando a
-         * função fork. O processo vai ser uma cópia deste. Depois da
-         * função fork, os dois processos (pai e filho) estarão no mesmo
-         * ponto do código, mas cada um terá um PID diferente. Assim é
-         * possível diferenciar o que cada processo terá que fazer. O
-         * filho tem que processar a requisição do cliente. O pai tem
-         * que voltar no loop para continuar aceitando novas conexões.
-         * Se o retorno da função fork for zero, é porque está no
-         * processo filho.
-         */
-        if ( (childpid = fork()) == 0) {
-            /**** PROCESSO FILHO ****/
-            printf("[Uma conexão aberta]\n");
-            /* Já que está no processo filho, não precisa mais do socket
-             * listenfd. Só o processo pai precisa deste socket.
-             */
-            close(listenfd);
-         
-            /* Agora pode ler do socket e escrever no socket. Isto tem
-             * que ser feito em sincronia com o cliente. Não faz sentido
-             * ler sem ter o que ler. Ou seja, neste caso está sendo
-             * considerado que o cliente vai enviar algo para o servidor.
-             * O servidor vai processar o que tiver sido enviado e vai
-             * enviar uma resposta para o cliente (Que precisará estar
-             * esperando por esta resposta) 
-             */
-
-            /* ========================================================= */
-            /* ========================================================= */
-            /*                         EP1 INÍCIO                        */
-            /* ========================================================= */
-            /* ========================================================= */
-            /* TODO: É esta parte do código que terá que ser modificada
-             * para que este servidor consiga interpretar comandos AMQP
-             */
-	    handle(connfd);
-            /* ========================================================= */
-            /* ========================================================= */
-            /*                         EP1 FIM                           */
-            /* ========================================================= */
-            /* ========================================================= */
-
-            /* Após ter feito toda a troca de informação com o cliente,
-             * pode finalizar o processo filho
-             */
-            printf("[Uma conexão fechada]\n");
-            exit(0);
-        }
-        else
-            /**** PROCESSO PAI ****/
-            /* Se for o pai, a única coisa a ser feita é fechar o socket
-             * connfd (ele é o socket do cliente específico que será tratado
-             * pelo processo filho)
-             */
-            close(connfd);
+	struct args_t args;
+	args.connfd = connfd;
+	args.num_queues = &num_queues;
+	args.queues = queues;
+	pthread_t thread_id;
+	pthread_create(&thread_id, NULL, handle, &args);
     }
+    // FIM DA ALTERAÇÃO EP1
     exit(0);
 }

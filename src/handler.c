@@ -1,15 +1,31 @@
 #include "handler.h"
+#include "util.h"
+#include "boilerplate.h"
 
-void handle(int connfd) {
-	char recvline[MAXLINE + 1];
+// Misc global variables
+const ssize_t BUFFER_SIZE = 4096;
+
+void* handle(void* args) {
+	int connfd = ((struct args_t*)args)->connfd;
+	atomic_size_t* num_queues = ((struct args_t*) args)->num_queues;
+	struct amqp_queue* queues = ((struct args_t*) args)->queues;
+	// buffer is used for everything so we don't need to worry about memory allocation
+	char buffer[BUFFER_SIZE];
 	ssize_t n;
-	while ((n=read(connfd, recvline, MAXLINE)) > 0) {
-		recvline[n]=0;
-		printf("[Cliente conectado no processo filho %d enviou:] ",getpid());
-		if ((fputs(recvline,stdout)) == EOF) {
-			perror("fputs :( \n");
-			exit(6);
+
+	// Check protocol header
+	static const char PROTOCOL_HEADER[8] = {'A', 'M', 'Q', 'P', 0x00, 0x00, 0x09, 0x01};
+	okread(connfd, buffer, 8);
+	for(size_t i = 0; i < 8; i++) {
+		if(buffer[i] != PROTOCOL_HEADER[i]) {
+			// Header is invalid. Write back the correct header.
+			okwrite(connfd, PROTOCOL_HEADER, 8);
+			exit(1);
 		}
-		write(connfd, recvline, strlen(recvline));
 	}
+	connection_start_boilerplate(buffer, connfd);
+
+	connection_end_boilerplate(buffer, connfd);
+
+	return 0;
 }
