@@ -26,6 +26,5 @@ void* handle(void* args) {
 	connection_start_boilerplate(buffer, connfd);
 
 	connection_end_boilerplate(buffer, connfd);
-
 	return 0;
 }

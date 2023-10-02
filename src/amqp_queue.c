@@ -4,5 +4,5 @@
 void initialize_amqp_queue(struct amqp_queue* queue, char* name);
 void publish_message(struct amqp_queue* queue, char* message);
 void distribute_messages(struct amqp_queue* queue);
-void subscrite(struct amqp_queue* queue, int connfd);
-void unsubscrite(struct amqp_queue* queue, int connfd);
+void subscribe(struct amqp_queue* queue, int connfd);
+void unsubscribe(struct amqp_queue* queue, int connfd);

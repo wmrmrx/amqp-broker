@@ -46,6 +46,29 @@
 #include "handler.h"
 #include "amqp_queue.h"
 #include "util.h"
+
+struct distributor_args_t {
+    atomic_size_t* num_queues;
+    struct amqp_queue* queues;
+};
+
+// Distribute messages between consumers for each queue
+void* distributor(void* args) {
+    atomic_size_t* num_queues = ((struct distributor_args_t*) args)->num_queues;
+    struct amqp_queue* queues = ((struct distributor_args_t*) args)->queues;
+    for(;;) {
+	size_t size = atomic_load(num_queues);
+	for(size_t i = 0; i < size; i++) {
+	    pthread_mutex_lock(&queues[i].mutex);
+
+	    if(queues[i].message_queue_head == NULL) {
+		pthread_mutex_unlock(&queues[i].mutex);
+	    } else {
+
+	    }
+	}
+    }
+}
 // FIM DA ALTERAÇÃO EP1
 
 #define LISTENQ 1
@@ -123,7 +146,13 @@ int main (int argc, char **argv) {
     const size_t MAX_QUEUES = 1024;
     atomic_size_t num_queues;
     atomic_init(&num_queues, 0);
-    struct amqp_queue* queues = calloc(MAX_QUEUES, sizeof(struct amqp_queue));
+    struct amqp_queue queues[1024];
+
+    pthread_t thread_id;
+    struct distributor_args_t distributor_args;
+    distributor_args.num_queues = &num_queues;
+    distributor_args.queues = queues;
+    pthread_create(&thread_id, NULL, distributor, &distributor_args);
 
     for (;;) {
         if ((connfd = accept(listenfd, (struct sockaddr *) NULL, NULL)) == -1 ) {
@@ -134,7 +163,6 @@ int main (int argc, char **argv) {
 	args.connfd = connfd;
 	args.num_queues = &num_queues;
 	args.queues = queues;
-	pthread_t thread_id;
 	pthread_create(&thread_id, NULL, handle, &args);
     }
     // FIM DA ALTERAÇÃO EP1

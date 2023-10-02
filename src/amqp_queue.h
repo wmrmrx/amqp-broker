@@ -6,7 +6,7 @@
 
 struct message_node {
 	char* message;
-	struct message_node *prev, *next;
+	struct message_node *next;
 };
 
 struct subscriber_node {
@@ -18,10 +18,9 @@ struct subscriber_node {
 struct amqp_queue {
 	char name[256];
 
-	// Consumed from head, published to last
+	// Singly Linked List
 	struct message_node* message_queue_head;
-	struct message_node* message_queue_last;
-
+	// Circular Linked List
 	struct subscriber_node* subscriber_node_head;
 
 	pthread_mutex_t mutex;
@@ -30,7 +29,7 @@ struct amqp_queue {
 void initialize_amqp_queue(struct amqp_queue* queue, char* name);
 void publish_message(struct amqp_queue* queue, char* message);
 void distribute_messages(struct amqp_queue* queue);
-void subscrite(struct amqp_queue* queue, int connfd);
-void unsubscrite(struct amqp_queue* queue, int connfd);
+void subscribe(struct amqp_queue* queue, int connfd);
+void unsubscribe(struct amqp_queue* queue, int connfd);
 
 #endif
