@@ -146,7 +146,7 @@ int main (int argc, char **argv) {
     const size_t MAX_QUEUES = 1024;
     atomic_size_t num_queues;
     atomic_init(&num_queues, 0);
-    struct amqp_queue queues[1024];
+    struct amqp_queue queues[MAX_QUEUES];
 
     pthread_t thread_id;
     struct distributor_args_t distributor_args;
