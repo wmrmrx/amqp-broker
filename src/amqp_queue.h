@@ -1,17 +1,16 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef _AMQP_QUEUE_H
+#define _AMQP_QUEUE_H
 
 #include <pthread.h>
+#include <stdbool.h>
 
-// Message Linked List
 struct message_node {
 	char* message;
 	struct message_node *prev, *next;
 };
 
-typedef void(*subscriber_callback)(int, char*);
 struct subscriber_node {
-	subscriber_callback callback;
+	int connfd;
 	struct subscriber_node *prev, *next;
 };
 
@@ -27,5 +26,11 @@ struct amqp_queue {
 
 	pthread_mutex_t mutex;
 };
+
+void initialize_amqp_queue(struct amqp_queue* queue, char* name);
+void publish_message(struct amqp_queue* queue, char* message);
+void distribute_messages(struct amqp_queue* queue);
+void subscrite(struct amqp_queue* queue, int connfd);
+void unsubscrite(struct amqp_queue* queue, int connfd);
 
 #endif

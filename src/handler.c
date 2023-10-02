@@ -1,6 +1,7 @@
 #include "handler.h"
 #include "util.h"
 #include "boilerplate.h"
+#include "amqp_queue.h"
 
 // Misc global variables
 const ssize_t BUFFER_SIZE = 4096;
@@ -11,7 +12,6 @@ void* handle(void* args) {
 	struct amqp_queue* queues = ((struct args_t*) args)->queues;
 	// buffer is used for everything so we don't need to worry about memory allocation
 	char buffer[BUFFER_SIZE];
-	ssize_t n;
 
 	// Check protocol header
 	static const char PROTOCOL_HEADER[8] = {'A', 'M', 'Q', 'P', 0x00, 0x00, 0x09, 0x01};
@@ -20,7 +20,7 @@ void* handle(void* args) {
 		if(buffer[i] != PROTOCOL_HEADER[i]) {
 			// Header is invalid. Write back the correct header.
 			okwrite(connfd, PROTOCOL_HEADER, 8);
-			exit(1);
+			pthread_exit(NULL);
 		}
 	}
 	connection_start_boilerplate(buffer, connfd);

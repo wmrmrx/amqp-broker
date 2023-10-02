@@ -15,8 +15,6 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdatomic.h>
-#include "amqp_queue.h"
-#include "util.h"
 
 // Handles a connection
 void* handle(void* args);

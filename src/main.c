@@ -44,6 +44,8 @@
 #include <stdatomic.h>
 #include <pthread.h>
 #include "handler.h"
+#include "amqp_queue.h"
+#include "util.h"
 // FIM DA ALTERAÇÃO EP1
 
 #define LISTENQ 1

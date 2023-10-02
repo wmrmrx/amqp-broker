@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdatomic.h>
+#include "amqp_queue.h"
 
 // Type only used in function handler because of pthread constraints
 struct args_t {
     int connfd;
     atomic_size_t* num_queues;
-    struct ampq_queue* queues;
+    struct amqp_queue* queues;
 };
 
 // Functions for writing and reading safely
