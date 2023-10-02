@@ -59,13 +59,7 @@ void* distributor(void* args) {
     for(;;) {
 	size_t size = atomic_load(num_queues);
 	for(size_t i = 0; i < size; i++) {
-	    pthread_mutex_lock(&queues[i].mutex);
-
-	    if(queues[i].message_queue_head == NULL) {
-		pthread_mutex_unlock(&queues[i].mutex);
-	    } else {
-
-	    }
+		distribute_messages(&queues[i]);
 	}
     }
 }
@@ -152,8 +146,10 @@ int main (int argc, char **argv) {
     struct distributor_args_t distributor_args;
     distributor_args.num_queues = &num_queues;
     distributor_args.queues = queues;
+    // Create a thread whose only purpose is to distribute the messages to the consumers
     pthread_create(&thread_id, NULL, distributor, &distributor_args);
 
+    // Create a thread for each connection
     for (;;) {
         if ((connfd = accept(listenfd, (struct sockaddr *) NULL, NULL)) == -1 ) {
             perror("accept :(\n");

@@ -26,6 +26,7 @@ struct amqp_queue {
 	pthread_mutex_t mutex;
 };
 
+// Self-documenting names
 void initialize_amqp_queue(struct amqp_queue* queue, char* name);
 void publish_message(struct amqp_queue* queue, char* message);
 void distribute_messages(struct amqp_queue* queue);

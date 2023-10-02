@@ -24,6 +24,13 @@ void* handle(void* args) {
 		}
 	}
 	connection_start_boilerplate(buffer, connfd);
+	struct frame_t frame = read_frame(buffer, connfd);
+	okread(connfd, buffer, frame.size + 1);
+
+	if(buffer[0] == 0x00 && buffer[1] == 0x32 // QUEUE
+		buffer[2] == 0x00 && buffer[3] == 0x0a // DECLARE
+	) {
+	}
 
 	connection_end_boilerplate(buffer, connfd);
 	return 0;
