@@ -8,7 +8,8 @@
 // Type only used in function handler because of pthread constraints
 struct args_t {
     int connfd;
-    atomic_size_t* num_queues;
+    ssize_t* num_queues;
+    pthread_mutex_t* num_queues_mutex;
     struct amqp_queue* queues;
 };
 

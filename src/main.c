@@ -48,16 +48,20 @@
 #include "util.h"
 
 struct distributor_args_t {
-    atomic_size_t* num_queues;
+    ssize_t* num_queues;
+    pthread_mutex_t* num_queues_mutex;
     struct amqp_queue* queues;
 };
 
 // Distribute messages between consumers for each queue
 void* distributor(void* args) {
-    atomic_size_t* num_queues = ((struct distributor_args_t*) args)->num_queues;
+    ssize_t* num_queues = ((struct distributor_args_t*) args)->num_queues;
+    pthread_mutex_t* num_queues_mutex = ((struct distributor_args_t*) args)->num_queues_mutex;
     struct amqp_queue* queues = ((struct distributor_args_t*) args)->queues;
     for(;;) {
-	size_t size = atomic_load(num_queues);
+	pthread_mutex_lock(num_queues_mutex);
+	size_t size = *num_queues;
+	pthread_mutex_unlock(num_queues_mutex);
 	for(size_t i = 0; i < size; i++) {
 		distribute_messages(&queues[i]);
 	}
@@ -138,8 +142,9 @@ int main (int argc, char **argv) {
 
     // ALTERAÇÃO EP1
     const size_t MAX_QUEUES = 1024;
-    atomic_size_t num_queues;
-    atomic_init(&num_queues, 0);
+    ssize_t num_queues;
+    pthread_mutex_t num_queues_mutex;
+    pthread_mutex_init(&num_queues_mutex, NULL);
     struct amqp_queue queues[MAX_QUEUES];
 
     pthread_t thread_id;
@@ -158,6 +163,7 @@ int main (int argc, char **argv) {
 	struct args_t args;
 	args.connfd = connfd;
 	args.num_queues = &num_queues;
+	args.num_queues_mutex = &num_queues_mutex;
 	args.queues = queues;
 	pthread_create(&thread_id, NULL, handle, &args);
     }

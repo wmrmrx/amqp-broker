@@ -1,4 +1,5 @@
-#include <stdatomic.h>
+#include <pthread.h>
+#include <stdbool.h>
 #include "handler.h"
 #include "util.h"
 #include "boilerplate.h"
@@ -9,7 +10,8 @@ const ssize_t BUFFER_SIZE = 4096;
 
 void* handle(void* args) {
 	int connfd = ((struct args_t*)args)->connfd;
-	atomic_size_t* num_queues = ((struct args_t*) args)->num_queues;
+	ssize_t* num_queues = ((struct args_t*) args)->num_queues;
+	pthread_mutex_t* num_queues_mutex = ((struct args_t*) args)->num_queues_mutex;
 	struct amqp_queue* queues = ((struct args_t*) args)->queues;
 	// buffer is used for everything so we don't need to worry about memory allocation
 	char buffer[BUFFER_SIZE];
@@ -31,11 +33,23 @@ void* handle(void* args) {
 	if(buffer[0] == 0x00 && buffer[1] == 0x32 && // QUEUE
 		buffer[2] == 0x00 && buffer[3] == 0x0a // DECLARE
 	) {
-		ssize_t i = atomic_load(num_queues);
+		pthread_mutex_lock(num_queues_mutex);
+		ssize_t n = *num_queues;
 		ssize_t queue_name_len = frame.size - 20;
-		buffer[13 + queue_name_len] = '\0';
-		initialize_amqp_queue(&queues[i], &buffer[13]);
-		atomic_fetch_add(num_queues, 1);
+		char* name = &buffer[13];
+		name[queue_name_len] = '\0';
+
+		// Check if there's already a queue with that name
+		bool found_queue = false;
+		for(ssize_t i=0;i<n;i++) if(strcmp(name, queues[i].name) == 0) {
+			found_queue = true;
+			break;
+		}
+		if(!found_queue) {
+			initialize_amqp_queue(&queues[n], name);
+			(*num_queues)++;
+		
+		pthread_mutex_unlock(num_queues_mutex);
 
 		// Cop out and just close the connection for simplicity
 		close(connfd);
