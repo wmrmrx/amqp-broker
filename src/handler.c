@@ -34,9 +34,10 @@ void* handle(void* args) {
 		buffer[2] == 0x00 && buffer[3] == 0x0a // DECLARE
 	) {
 		pthread_mutex_lock(num_queues_mutex);
+
 		ssize_t n = *num_queues;
-		ssize_t queue_name_len = frame.size - 20;
-		char* name = &buffer[13];
+		ssize_t queue_name_len = frame.size - 12;
+		char* name = &buffer[6];
 		name[queue_name_len] = '\0';
 
 		// Check if there's already a queue with that name
@@ -48,14 +49,86 @@ void* handle(void* args) {
 		if(!found_queue) {
 			initialize_amqp_queue(&queues[n], name);
 			(*num_queues)++;
+		}
 		
 		pthread_mutex_unlock(num_queues_mutex);
 
 		// Cop out and just close the connection for simplicity
 		close(connfd);
 		return NULL;
+	} else if(buffer[0] == 0x00 && buffer[1] == 0x3c && // BASIC
+			buffer[2] == 0x00 && buffer[3] == 0x28 // PUBLISH
+	) {
+		ssize_t queue_name_len = frame.size - 9;
+		char* name = &buffer[6];
+		name[queue_name_len] = '\0';
+
+		pthread_mutex_lock(num_queues_mutex);
+		ssize_t n = *num_queues;
+		pthread_mutex_unlock(num_queues_mutex);
+		ssize_t queue_id;
+		for(queue_id = 0; queue_id < n; queue_id++) {
+			if(strcmp(name, queues[queue_id].name) == 0)
+				break;
+		}
+		if(queue_id == n) { // queue with that name not found
+			// Cop out and just close the connection for simplicity
+			close(connfd);
+			return NULL;
+		}
+		struct amqp_queue* queue = &queues[queue_id];
+
+		frame = read_frame(buffer, connfd);
+		okread(connfd, buffer, frame.size + 1); // Ignoring the Content Header
+
+		frame = read_frame(buffer, connfd);
+		okread(connfd, buffer, frame.size + 1); // Ignoring the Content Header
+		char* message = malloc(frame.size);
+		memcpy(message, buffer, frame.size);
+
+		// message is moved
+		publish_message(queue, message);
+
+		// Cop out and just close the connection for simplicity
+		close(connfd);
+		return NULL;
+	} else if(buffer[0] == 0x00 && buffer[1] == 0x3c && // BASIC
+			buffer[2] == 0x00 && buffer[3] == 0x14 // CONSUME
+	){ 
+		ssize_t queue_name_len = frame.size - 13;
+		char *name = &buffer[6];
+		name[queue_name_len] = '\0';
+
+		pthread_mutex_lock(num_queues_mutex);
+		ssize_t n = *num_queues;
+		pthread_mutex_unlock(num_queues_mutex);
+		ssize_t queue_id;
+		for(queue_id = 0; queue_id < n; queue_id++) {
+			if(strcmp(name, queues[queue_id].name) == 0)
+				break;
+		}
+		if(queue_id == n) { // queue with that name not found
+			// Cop out and just close the connection for simplicity
+			close(connfd);
+			return NULL;
+		}
+		struct amqp_queue* queue = &queues[queue_id];
+
+		// Just write any Consumer-Tag since it won't be needed for simplicity
+		static const char* BASIC_CONSUME_OK = 
+"\x01\x00\x01\x00\x00\x00\x24\x00\x3c\x00\x15\x1f\x61\x6d\x71\x2e" \
+"\x63\x74\x61\x67\x2d\x79\x64\x4b\x63\x4f\x39\x58\x44\x62\x43\x57" \
+"\x45\x63\x57\x46\x78\x37\x2d\x79\x4f\x61\x77\xce";
+		okwrite(connfd, BASIC_CONSUME_OK, 44);
+
+		// This connection will be managed by the distributor thread
+		subscribe(queue, connfd);
+		return NULL;
+	} else {
+	    perror("Request desconhecido :( \n");
 	}
 
-	connection_end_boilerplate(buffer, connfd);
+	// For simplicity, we are just ending the connection by closing the file descriptor, so this isn't needed
+	// connection_end_boilerplate(buffer, connfd);
 	return NULL;
 }

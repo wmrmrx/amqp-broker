@@ -25,6 +25,12 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** sub_node
 		if(round_robin(msg_node->next, sub_node) == -1)
 			return -1;
 	ssize_t msg_len = strlen(msg_node->message);
+
+
+	static char buffer[4096]; // Ok to do this because only one thread is in charge of distributing messages
+
+	// Now write message to subscriber
+	// TODO
 	if( write((*sub_node)->connfd, msg_node->message, msg_len) != msg_len )
 		return -1;
 
