@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include "handler.h"
 #include "util.h"
 #include "boilerplate.h"
@@ -27,11 +28,20 @@ void* handle(void* args) {
 	struct frame_t frame = read_frame(buffer, connfd);
 	okread(connfd, buffer, frame.size + 1);
 
-	if(buffer[0] == 0x00 && buffer[1] == 0x32 // QUEUE
+	if(buffer[0] == 0x00 && buffer[1] == 0x32 && // QUEUE
 		buffer[2] == 0x00 && buffer[3] == 0x0a // DECLARE
 	) {
+		ssize_t i = atomic_load(num_queues);
+		ssize_t queue_name_len = frame.size - 20;
+		buffer[13 + queue_name_len] = '\0';
+		initialize_amqp_queue(&queues[i], &buffer[13]);
+		atomic_fetch_add(num_queues, 1);
+
+		// Cop out and just close the connection for simplicity
+		close(connfd);
+		return NULL;
 	}
 
 	connection_end_boilerplate(buffer, connfd);
-	return 0;
+	return NULL;
 }
