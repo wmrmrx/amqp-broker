@@ -22,5 +22,8 @@ struct frame_t read_frame(char* buffer, int connfd) {
 		   (((uint32_t) buffer[4]) << 16) +
 		   (((uint32_t) buffer[5]) << 8)  +
 	           (((uint32_t) buffer[6]));
+
+	assert(ret.type == 0x01); // type is always METHOD
+
 	return ret;
 }
