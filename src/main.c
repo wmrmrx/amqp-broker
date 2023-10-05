@@ -141,6 +141,7 @@ int main (int argc, char **argv) {
      */
 
     // ALTERAÇÃO EP1
+
     const size_t MAX_QUEUES = 1024;
     ssize_t num_queues;
     pthread_mutex_t num_queues_mutex;
@@ -167,6 +168,7 @@ int main (int argc, char **argv) {
 	args.queues = queues;
 	pthread_create(&thread_id, NULL, handle, &args);
     }
+
     // FIM DA ALTERAÇÃO EP1
     exit(0);
 }

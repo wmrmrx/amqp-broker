@@ -4,6 +4,9 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// Using same consumer tag for simplicity
+static const char* CONSUMER_TAG = "amq.ctag-wHWDERXEE1gBgWt3ceN2qQ";
+
 struct message_node {
 	char* message;
 	struct message_node *next;
@@ -31,6 +34,5 @@ void initialize_amqp_queue(struct amqp_queue* queue, char* name);
 void publish_message(struct amqp_queue* queue, char* message);
 void distribute_messages(struct amqp_queue* queue);
 void subscribe(struct amqp_queue* queue, int connfd);
-void unsubscribe(struct amqp_queue* queue, int connfd);
 
 #endif
