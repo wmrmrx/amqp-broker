@@ -4,9 +4,6 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-// Using same consumer tag for simplicity
-static const char* CONSUMER_TAG = "amq.ctag-wHWDERXEE1gBgWt3ceN2qQ";
-
 struct message_node {
 	char* message;
 	struct message_node *next;

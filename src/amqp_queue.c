@@ -1,4 +1,5 @@
 #include "amqp_queue.h"
+#include "util.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,14 +46,75 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 	ssize_t msg_len = strlen(msg_node->message);
 
 	static char buffer[4096]; // Ok to do this because only one thread is in charge of distributing messages
+	bool err = false;
+	do {
+		static const char* BASIC_DELIVER = 
+	"\x01\x00\x01\x00\x00\x00\x31\x00\x3c\x00\x3c\x1f\x61\x6d\x71\x2e" \
+	"\x63\x74\x61\x67\x2d\x5f\x62\x4c\x75\x56\x79\x32\x4f\x79\x61\x6c" \
+	"\x6f\x4f\x45\x31\x33\x71\x71\x34\x47\x41\x67\x00\x00\x00\x00\x00" \
+	"\x00\x00\x01\x00\x00\x02\x71\x31\xce";
 
-	// Now write message to subscriber
-	// TODO
-	if( write((*head)->connfd, msg_node->message, msg_len) != msg_len )
-		return -1;
+		// Now write message to subscriber
+		if( write((*head)->connfd, BASIC_DELIVER, 57) != 57 ) {
+			err = true;
+			break;
+		}
+
+		static const char* CONTENT_HEADER = 
+	"\x02\x00\x01\x00\x00\x00\x0f\x00\x3c\x00\x00\xff\xff\xff\xff\xff" \
+	"\xff\xff\xff\x10\x00\x01\xce";
+		memcpy(buffer, CONTENT_HEADER, 23);
+		// write body size in big endian
+		buffer[11] = (char) (msg_len >> 56);
+		buffer[12] = (char) (msg_len >> 48);
+		buffer[13] = (char) (msg_len >> 40);
+		buffer[14] = (char) (msg_len >> 32);
+		buffer[15] = (char) (msg_len >> 24);
+		buffer[16] = (char) (msg_len >> 16);
+		buffer[17] = (char) (msg_len >> 8 );
+		buffer[18] = (char) (msg_len      );
+		if( write((*head)->connfd, buffer, 23) != 23 ) {
+			err = true;
+			break;
+		}
+
+		// write CONTENT_BODY
+		buffer[0] = 0x03;
+		buffer[1] = 0x00;
+		buffer[2] = 0x01;
+		buffer[3] = (char) (msg_len >> 24);
+		buffer[4] = (char) (msg_len >> 16);
+		buffer[5] = (char) (msg_len >> 8 );
+		buffer[6] = (char) (msg_len      );
+		memcpy(buffer + 7, msg_node->message, msg_len);
+		if( write((*head)->connfd, buffer, msg_len + 7) != msg_len + 7 ) {
+			err = true;
+			break;
+		}
+
+		// Read Basic.ACK
+		struct frame_t ret;
+		if( read((*head)->connfd, buffer, 7) != 7 ) {
+			err = true;
+			break;
+		}
+		ret.type = (uint8_t) buffer[0];
+		ret.channel = (((uint16_t) buffer[1]) << 8) +
+			      (((uint16_t) buffer[2]));
+		ret.size = (((uint32_t) buffer[3]) << 24) +
+			   (((uint32_t) buffer[4]) << 16) +
+			   (((uint32_t) buffer[5]) << 8)  +
+			   (((uint32_t) buffer[6]));
+		if( read((*head)->connfd, buffer, ret.size + 1) != ret.size + 1 ) {
+			err = true; 
+			break;
+		}
+
+	} while(false);
+
 
 	// Read the Basic.ACK, if there isn't unsubscribe the current node
-	{
+	if(err) {
 		unsubscribe(head);
 		if(*head == NULL) 
 			return -1;
