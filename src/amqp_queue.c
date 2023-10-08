@@ -20,7 +20,11 @@ void publish_message(struct amqp_queue* queue, char* message) {
 	new_head->message = message;
 	new_head->next = queue->message_queue_head;
 	queue->message_queue_head = new_head;
+	if(queue->message_queue_head) {
+		printf("YAY\n");
+	}
 	pthread_mutex_unlock(&queue->mutex);
+	printf("Published message %s in queue %s\n", message, queue->name);
 }
 
 void unsubscribe(struct subscriber_node** node_ptr) {
@@ -34,6 +38,8 @@ void unsubscribe(struct subscriber_node** node_ptr) {
 		node->next->prev = node->prev;
 		*node_ptr = node->next;
 	}
+
+	printf("Unsubscribed node %d!\n", node->connfd);
 
 	close(node->connfd);
 	free(node);
@@ -91,7 +97,9 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 		buffer[5] = (char) (msg_len >> 8 );
 		buffer[6] = (char) (msg_len      );
 		memcpy(buffer + 7, msg_node->message, msg_len);
-		if( write((*head)->connfd, buffer, msg_len + 7) != msg_len + 7 ) {
+		buffer[7 + msg_len] = 0xce;
+		if( write((*head)->connfd, buffer, msg_len + 8) != msg_len + 8 ) {
+			printf("wow\n");
 			err = true;
 			break;
 		}
@@ -133,8 +141,8 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 
 void distribute_messages(struct amqp_queue* queue) {
 	pthread_mutex_lock(&queue->mutex);
-	round_robin(queue->message_queue_head, &queue->subscriber_node_head);
-	queue->message_queue_head = NULL;
+	if( round_robin(queue->message_queue_head, &queue->subscriber_node_head) != -1 )
+		queue->message_queue_head = NULL;
 	pthread_mutex_unlock(&queue->mutex);
 }
 
@@ -154,5 +162,7 @@ void subscribe(struct amqp_queue* queue, int connfd) {
 	}
 
 	pthread_mutex_unlock(&queue->mutex);
+
+	printf("Subscribed %d to %s\n", connfd, queue->name);
 }
 

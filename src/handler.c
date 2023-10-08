@@ -38,8 +38,8 @@ void* handle(void* _args) {
 		pthread_mutex_lock(num_queues_mutex);
 
 		ssize_t n = *num_queues;
-		ssize_t queue_name_len = frame.size - 11;
-		char* name = &buffer[6];
+		ssize_t queue_name_len = frame.size - 12;
+		char* name = &buffer[7];
 		name[queue_name_len] = '\0';
 
 		// Check if there's already a queue with that name
@@ -63,7 +63,7 @@ void* handle(void* _args) {
 			buffer[2] == 0x00 && buffer[3] == 0x28 // PUBLISH
 	) {
 		ssize_t queue_name_len = frame.size - 9;
-		char* name = &buffer[6];
+		char* name = &buffer[8];
 		name[queue_name_len] = '\0';
 
 		pthread_mutex_lock(num_queues_mutex);
@@ -100,7 +100,7 @@ void* handle(void* _args) {
 			buffer[2] == 0x00 && buffer[3] == 0x14 // CONSUME
 	){ 
 		ssize_t queue_name_len = frame.size - 13;
-		char *name = &buffer[6];
+		char *name = &buffer[7];
 		name[queue_name_len] = '\0';
 
 		pthread_mutex_lock(num_queues_mutex);

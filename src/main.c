@@ -65,6 +65,7 @@ void* distributor(void* args) {
 	for(size_t i = 0; i < size; i++) {
 		distribute_messages(&queues[i]);
 	}
+	sleep(1);
     }
 }
 // FIM DA ALTERAÇÃO EP1
