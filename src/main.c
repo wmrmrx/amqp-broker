@@ -151,6 +151,7 @@ int main (int argc, char **argv) {
     pthread_t thread_id;
     struct distributor_args_t distributor_args;
     distributor_args.num_queues = &num_queues;
+    distributor_args.num_queues_mutex = &num_queues_mutex;
     distributor_args.queues = queues;
     // Create a thread whose only purpose is to distribute the messages to the consumers
     pthread_create(&thread_id, NULL, distributor, &distributor_args);
@@ -161,12 +162,12 @@ int main (int argc, char **argv) {
             perror("accept :(\n");
             exit(5);
         }
-	struct args_t args;
-	args.connfd = connfd;
-	args.num_queues = &num_queues;
-	args.num_queues_mutex = &num_queues_mutex;
-	args.queues = queues;
-	pthread_create(&thread_id, NULL, handle, &args);
+	struct args_t* args = malloc(sizeof(struct args_t));
+	args->connfd = connfd;
+	args->num_queues = &num_queues;
+	args->num_queues_mutex = &num_queues_mutex;
+	args->queues = queues;
+	pthread_create(&thread_id, NULL, handle, args);
     }
 
     // FIM DA ALTERAÇÃO EP1

@@ -8,11 +8,12 @@
 // Misc global variables
 const ssize_t BUFFER_SIZE = 4096;
 
-void* handle(void* args) {
-	int connfd = ((struct args_t*)args)->connfd;
-	ssize_t* num_queues = ((struct args_t*) args)->num_queues;
-	pthread_mutex_t* num_queues_mutex = ((struct args_t*) args)->num_queues_mutex;
-	struct amqp_queue* queues = ((struct args_t*) args)->queues;
+void* handle(void* _args) {
+	struct args_t *args = _args;
+	int connfd = args->connfd;
+	ssize_t* num_queues = args->num_queues;
+	pthread_mutex_t* num_queues_mutex = args->num_queues_mutex;
+	struct amqp_queue* queues = args->queues;
 	// buffer is used for everything so we don't need to worry about memory allocation
 	char buffer[BUFFER_SIZE];
 
@@ -23,7 +24,8 @@ void* handle(void* args) {
 		if(buffer[i] != PROTOCOL_HEADER[i]) {
 			// Header is invalid. Write back the correct header.
 			okwrite(connfd, PROTOCOL_HEADER, 8);
-			pthread_exit(NULL);
+			free(args); 
+			return NULL;
 		}
 	}
 	connection_start_boilerplate(buffer, connfd);
@@ -55,6 +57,7 @@ void* handle(void* args) {
 
 		// Cop out and just close the connection for simplicity
 		close(connfd);
+		free(args);
 		return NULL;
 	} else if(buffer[0] == 0x00 && buffer[1] == 0x3c && // BASIC
 			buffer[2] == 0x00 && buffer[3] == 0x28 // PUBLISH
@@ -91,6 +94,7 @@ void* handle(void* args) {
 
 		// Cop out and just close the connection for simplicity
 		close(connfd);
+		free(args);
 		return NULL;
 	} else if(buffer[0] == 0x00 && buffer[1] == 0x3c && // BASIC
 			buffer[2] == 0x00 && buffer[3] == 0x14 // CONSUME
@@ -123,6 +127,7 @@ void* handle(void* args) {
 
 		// This connection will be managed by the distributor thread
 		subscribe(queue, connfd);
+		free(args);
 		return NULL;
 	} else {
 	    perror("Request desconhecido :( \n");
@@ -130,5 +135,6 @@ void* handle(void* args) {
 
 	// For simplicity, we are just ending the connection by closing the file descriptor, so this isn't needed
 	// connection_end_boilerplate(buffer, connfd);
+	free(args);
 	return NULL;
 }

@@ -36,9 +36,11 @@ void unsubscribe(struct subscriber_node** node_ptr) {
 	free(node);
 }
 
-// Returns -1 if there's no subscribers
+// Returns -1 if there's no subscribers or no messages
 int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 	if(*head == NULL) 
+		return -1;
+	if(msg_node == NULL)
 		return -1;
 	if(msg_node->next)
 		if(round_robin(msg_node->next, head) == -1)
