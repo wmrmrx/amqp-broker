@@ -38,7 +38,7 @@ void* handle(void* _args) {
 		pthread_mutex_lock(num_queues_mutex);
 
 		ssize_t n = *num_queues;
-		ssize_t queue_name_len = frame.size - 12;
+		ssize_t queue_name_len = frame.size - 11;
 		char* name = &buffer[6];
 		name[queue_name_len] = '\0';
 

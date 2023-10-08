@@ -3,12 +3,15 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <assert.h>
 
 void initialize_amqp_queue(struct amqp_queue* queue, char* name) {
 	strcpy(queue->name, name);
 	queue->message_queue_head = NULL;
 	queue->subscriber_node_head = NULL;
 	pthread_mutex_init(&queue->mutex, NULL);
+	printf("Initialized queue %s\n", queue->name);
 }
 
 void publish_message(struct amqp_queue* queue, char* message) {
@@ -38,10 +41,9 @@ void unsubscribe(struct subscriber_node** node_ptr) {
 
 // Returns -1 if there's no subscribers or no messages
 int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
-	if(*head == NULL) 
+	if(*head == NULL || msg_node == NULL) 
 		return -1;
-	if(msg_node == NULL)
-		return -1;
+	assert(msg_node);
 	if(msg_node->next)
 		if(round_robin(msg_node->next, head) == -1)
 			return -1;

@@ -143,7 +143,7 @@ int main (int argc, char **argv) {
     // ALTERAÇÃO EP1
 
     const size_t MAX_QUEUES = 1024;
-    ssize_t num_queues;
+    ssize_t num_queues = 0;
     pthread_mutex_t num_queues_mutex;
     pthread_mutex_init(&num_queues_mutex, NULL);
     struct amqp_queue queues[MAX_QUEUES];
