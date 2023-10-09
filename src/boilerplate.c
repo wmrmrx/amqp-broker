@@ -37,52 +37,52 @@ void connection_start_boilerplate(char* buffer, int connfd) {
 "\x00\x06\x33\x2e\x31\x32\x2e\x36\x00\x00\x00\x0e\x50\x4c\x41\x49" \
 "\x4e\x20\x41\x4d\x51\x50\x4c\x41\x49\x4e\x00\x00\x00\x05\x65\x6e" \
 "\x5f\x55\x53\xce";
-	okwrite(connfd, CONNECTION_START, 516);
+	ok_write(connfd, CONNECTION_START, 516);
 
 	// Ignore Connection.Start-Ok
 	struct frame_t frame = read_frame(buffer, connfd);
-	okread(connfd, buffer, frame.size + 1);
+	ok_read(connfd, buffer, frame.size + 1);
 
 	static const char CONNECTION_TUNE[] = 
 "\x01\x00\x00\x00\x00\x00\x0c\x00\x0a\x00\x1e\x07\xff\x00\x02\x00" \
 "\x00\x00\x3c\xce";
-	okwrite(connfd, CONNECTION_TUNE, 20);
+	ok_write(connfd, CONNECTION_TUNE, 20);
 
 	// Ignore Connection.Tune-Ok
 	frame = read_frame(buffer, connfd);
-	okread(connfd, buffer, frame.size + 1);
+	ok_read(connfd, buffer, frame.size + 1);
 
 	// Ignore Connection.Open
 	frame = read_frame(buffer, connfd);
-	okread(connfd, buffer, frame.size + 1);
+	ok_read(connfd, buffer, frame.size + 1);
 
 	static const char CONNECTION_OPEN_OK[] = 
 "\x01\x00\x00\x00\x00\x00\x05\x00\x0a\x00\x29\x00\xce";
-	okwrite(connfd, CONNECTION_OPEN_OK, 13);
+	ok_write(connfd, CONNECTION_OPEN_OK, 13);
 
 	// Ignore Channel.OPEN
 	frame = read_frame(buffer, connfd);
-	okread(connfd, buffer, frame.size + 1);
+	ok_read(connfd, buffer, frame.size + 1);
 
 	static const char CHANNEL_OPEN_OK[] = 
 "\x01\x00\x01\x00\x00\x00\x08\x00\x14\x00\x0b\x00\x00\x00\x00\xce";
-	okwrite(connfd, CHANNEL_OPEN_OK, 16); 
+	ok_write(connfd, CHANNEL_OPEN_OK, 16); 
 }
 
 void connection_end_boilerplate(char* buffer, int connfd) {
 	// Ignore Channel.Close
 	struct frame_t frame = read_frame(buffer, connfd);
-	okread(connfd, buffer, frame.size + 1);
+	ok_read(connfd, buffer, frame.size + 1);
 
 	static const char CHANNEL_CLOSE_OK[] = 
 "\x01\x00\x01\x00\x00\x00\x04\x00\x14\x00\x29\xce";
-	okwrite(connfd, CHANNEL_CLOSE_OK, 12);
+	ok_write(connfd, CHANNEL_CLOSE_OK, 12);
 
 	// Ignore Connection.Close
 	frame = read_frame(buffer, connfd);
-	okread(connfd, buffer, frame.size + 1);
+	ok_read(connfd, buffer, frame.size + 1);
 
 	static const char CONNECTION_CLOSE_OK[] =
 "\x01\x00\x00\x00\x00\x00\x04\x00\x0a\x00\x33\xce";
-	okwrite(connfd, CONNECTION_CLOSE_OK, 12);
+	ok_write(connfd, CONNECTION_CLOSE_OK, 12);
 }

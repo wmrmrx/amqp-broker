@@ -14,8 +14,14 @@ struct args_t {
 };
 
 // Functions for writing and reading safely
-void okwrite(int fd, const char* buffer, ssize_t size);
-void okread(int fd, char* buffer, ssize_t size) ;
+
+// Returns -1 in case of failure
+int try_write(int fd, const char* buffer, ssize_t size);
+void ok_write(int fd, const char* buffer, ssize_t size);
+
+// Returns -1 in case of failure
+int try_read(int fd, char* buffer, sssize_t size);
+void ok_read(int fd, char* buffer, ssize_t size);
 
 // Functions to deal with frames
 struct frame_t {

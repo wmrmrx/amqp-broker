@@ -2,18 +2,26 @@
 #include <unistd.h>
 #include "util.h"
 
-void okwrite(int fd, const char* buffer, ssize_t size) {
+int try_write(int fd, const char* buffer, ssize_t size) {
 	assert( write(fd, buffer, size) == size );
 }
 
-void okread(int fd, char* buffer, ssize_t size) {
+void ok_write(int fd, const char* buffer, ssize_t size) {
+	assert( write(fd, buffer, size) == size );
+}
+
+int try_read(int fd, char* buffer, ssize_t size) {
+	assert( read(fd, buffer, size) == size );
+}
+
+void ok_read(int fd, char* buffer, ssize_t size) {
 	assert( read(fd, buffer, size) == size );
 }
 
 struct frame_t read_frame(char* buffer, int connfd) {
 	struct frame_t ret;
 
-	okread(connfd, buffer, 7);
+	ok_read(connfd, buffer, 7);
 
 	ret.type = (uint8_t) buffer[0];
 	ret.channel = (((uint16_t) buffer[1]) << 8) +

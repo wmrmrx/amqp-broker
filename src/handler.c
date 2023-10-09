@@ -19,18 +19,18 @@ void* handle(void* _args) {
 
 	// Check protocol header
 	static const char PROTOCOL_HEADER[8] = {'A', 'M', 'Q', 'P', 0x00, 0x00, 0x09, 0x01};
-	okread(connfd, buffer, 8);
+	ok_read(connfd, buffer, 8);
 	for(size_t i = 0; i < 8; i++) {
 		if(buffer[i] != PROTOCOL_HEADER[i]) {
 			// Header is invalid. Write back the correct header.
-			okwrite(connfd, PROTOCOL_HEADER, 8);
+			ok_write(connfd, PROTOCOL_HEADER, 8);
 			free(args); 
 			return NULL;
 		}
 	}
 	connection_start_boilerplate(buffer, connfd);
 	struct frame_t frame = read_frame(buffer, connfd);
-	okread(connfd, buffer, frame.size + 1);
+	ok_read(connfd, buffer, frame.size + 1);
 
 	if(buffer[0] == 0x00 && buffer[1] == 0x32 && // QUEUE
 		buffer[2] == 0x00 && buffer[3] == 0x0a // DECLARE
@@ -82,10 +82,10 @@ void* handle(void* _args) {
 		struct amqp_queue* queue = &queues[queue_id];
 
 		frame = read_frame(buffer, connfd);
-		okread(connfd, buffer, frame.size + 1); // Ignoring the Content Header
+		ok_read(connfd, buffer, frame.size + 1); // Ignoring the Content Header
 
 		frame = read_frame(buffer, connfd);
-		okread(connfd, buffer, frame.size + 1); // Ignoring the Content Header
+		ok_read(connfd, buffer, frame.size + 1); // Ignoring the Content Header
 		char* message = malloc(frame.size);
 		memcpy(message, buffer, frame.size);
 
@@ -123,7 +123,7 @@ void* handle(void* _args) {
 "\x01\x00\x01\x00\x00\x00\x24\x00\x3c\x00\x15\x1f\x61\x6d\x71\x2e" \
 "\x63\x74\x61\x67\x2d\x5f\x62\x4c\x75\x56\x79\x32\x4f\x79\x61\x6c" \
 "\x6f\x4f\x45\x31\x33\x71\x71\x34\x47\x41\x67\xce";
-		okwrite(connfd, BASIC_CONSUME_OK, 44);
+		ok_write(connfd, BASIC_CONSUME_OK, 44);
 
 		// This connection will be managed by the distributor thread
 		subscribe(queue, connfd);

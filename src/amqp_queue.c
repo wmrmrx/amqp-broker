@@ -20,9 +20,6 @@ void publish_message(struct amqp_queue* queue, char* message) {
 	new_head->message = message;
 	new_head->next = queue->message_queue_head;
 	queue->message_queue_head = new_head;
-	if(queue->message_queue_head) {
-		printf("YAY\n");
-	}
 	pthread_mutex_unlock(&queue->mutex);
 	printf("Published message %s in queue %s\n", message, queue->name);
 }
@@ -54,6 +51,8 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 		if(round_robin(msg_node->next, head) == -1)
 			return -1;
 	ssize_t msg_len = strlen(msg_node->message);
+
+	printf("Tentando %s", msg_node->message);
 
 	static char buffer[4096]; // Ok to do this because only one thread is in charge of distributing messages
 	bool err = false;
@@ -127,6 +126,7 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 
 	// Read the Basic.ACK, if there isn't unsubscribe the current node
 	if(err) {
+		printf("Errou!\n");
 		unsubscribe(head);
 		if(*head == NULL) 
 			return -1;
