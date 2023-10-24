@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-void initialize_amqp_queue(struct amqp_queue* queue, char* name) {
+void initialize_amqp_queue(struct amqp_queue* queue, unsigned char* name) {
 	strcpy(queue->name, name);
 	queue->message_queue_head = NULL;
 	queue->subscriber_node_head = NULL;
@@ -14,7 +14,7 @@ void initialize_amqp_queue(struct amqp_queue* queue, char* name) {
 	printf("Initialized queue %s\n", queue->name);
 }
 
-void publish_message(struct amqp_queue* queue, char* message) {
+void publish_message(struct amqp_queue* queue, unsigned char* message) {
 	pthread_mutex_lock(&queue->mutex);
 	struct message_node* new_head = malloc(sizeof(struct message_node));
 	new_head->message = message;
@@ -54,10 +54,10 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 
 	printf("Tentando %s", msg_node->message);
 
-	static char buffer[4096]; // Ok to do this because only one thread is in charge of distributing messages
+	static unsigned char buffer[4096]; // Ok to do this because only one thread is in charge of distributing messages
 	bool err = false;
 	do {
-		static const char* BASIC_DELIVER = 
+		static const unsigned char* BASIC_DELIVER = 
 	"\x01\x00\x01\x00\x00\x00\x31\x00\x3c\x00\x3c\x1f\x61\x6d\x71\x2e" \
 	"\x63\x74\x61\x67\x2d\x5f\x62\x4c\x75\x56\x79\x32\x4f\x79\x61\x6c" \
 	"\x6f\x4f\x45\x31\x33\x71\x71\x34\x47\x41\x67\x00\x00\x00\x00\x00" \
@@ -69,19 +69,19 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 			break;
 		}
 
-		static const char* CONTENT_HEADER = 
+		static const unsigned char* CONTENT_HEADER = 
 	"\x02\x00\x01\x00\x00\x00\x0f\x00\x3c\x00\x00\xff\xff\xff\xff\xff" \
 	"\xff\xff\xff\x10\x00\x01\xce";
 		memcpy(buffer, CONTENT_HEADER, 23);
 		// write body size in big endian
-		buffer[11] = (char) (msg_len >> 56);
-		buffer[12] = (char) (msg_len >> 48);
-		buffer[13] = (char) (msg_len >> 40);
-		buffer[14] = (char) (msg_len >> 32);
-		buffer[15] = (char) (msg_len >> 24);
-		buffer[16] = (char) (msg_len >> 16);
-		buffer[17] = (char) (msg_len >> 8 );
-		buffer[18] = (char) (msg_len      );
+		buffer[11] = (unsigned char) (msg_len >> 56);
+		buffer[12] = (unsigned char) (msg_len >> 48);
+		buffer[13] = (unsigned char) (msg_len >> 40);
+		buffer[14] = (unsigned char) (msg_len >> 32);
+		buffer[15] = (unsigned char) (msg_len >> 24);
+		buffer[16] = (unsigned char) (msg_len >> 16);
+		buffer[17] = (unsigned char) (msg_len >> 8 );
+		buffer[18] = (unsigned char) (msg_len      );
 		if( write((*head)->connfd, buffer, 23) != 23 ) {
 			err = true;
 			break;
@@ -91,10 +91,10 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 		buffer[0] = 0x03;
 		buffer[1] = 0x00;
 		buffer[2] = 0x01;
-		buffer[3] = (char) (msg_len >> 24);
-		buffer[4] = (char) (msg_len >> 16);
-		buffer[5] = (char) (msg_len >> 8 );
-		buffer[6] = (char) (msg_len      );
+		buffer[3] = (unsigned char) (msg_len >> 24);
+		buffer[4] = (unsigned char) (msg_len >> 16);
+		buffer[5] = (unsigned char) (msg_len >> 8 );
+		buffer[6] = (unsigned char) (msg_len      );
 		memcpy(buffer + 7, msg_node->message, msg_len);
 		buffer[7 + msg_len] = 0xce;
 		if( write((*head)->connfd, buffer, msg_len + 8) != msg_len + 8 ) {

@@ -2,23 +2,23 @@
 #include <unistd.h>
 #include "util.h"
 
-int try_write(int fd, const char* buffer, ssize_t size) {
+int try_write(int fd, const unsigned char* buffer, ssize_t size) {
 	assert( write(fd, buffer, size) == size );
 }
 
-void ok_write(int fd, const char* buffer, ssize_t size) {
+void ok_write(int fd, const unsigned char* buffer, ssize_t size) {
 	assert( write(fd, buffer, size) == size );
 }
 
-int try_read(int fd, char* buffer, ssize_t size) {
+int try_read(int fd, unsigned char* buffer, ssize_t size) {
 	assert( read(fd, buffer, size) == size );
 }
 
-void ok_read(int fd, char* buffer, ssize_t size) {
+void ok_read(int fd, unsigned char* buffer, ssize_t size) {
 	assert( read(fd, buffer, size) == size );
 }
 
-struct frame_t read_frame(char* buffer, int connfd) {
+struct frame_t read_frame(unsigned char* buffer, int connfd) {
 	struct frame_t ret;
 
 	ok_read(connfd, buffer, 7);

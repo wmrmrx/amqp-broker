@@ -16,12 +16,12 @@ struct args_t {
 // Functions for writing and reading safely
 
 // Returns -1 in case of failure
-int try_write(int fd, const char* buffer, ssize_t size);
-void ok_write(int fd, const char* buffer, ssize_t size);
+int try_write(int fd, const unsigned char* buffer, ssize_t size);
+void ok_write(int fd, const unsigned char* buffer, ssize_t size);
 
 // Returns -1 in case of failure
-int try_read(int fd, char* buffer, sssize_t size);
-void ok_read(int fd, char* buffer, ssize_t size);
+int try_read(int fd, unsigned char* buffer, sssize_t size);
+void ok_read(int fd, unsigned char* buffer, ssize_t size);
 
 // Functions to deal with frames
 struct frame_t {
@@ -29,6 +29,6 @@ struct frame_t {
 	uint16_t channel;
 	uint32_t size;
 };
-struct frame_t read_frame(char* buffer, int connfd);
+struct frame_t read_frame(unsigned char* buffer, int connfd);
 
 #endif

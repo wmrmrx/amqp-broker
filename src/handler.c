@@ -15,10 +15,10 @@ void* handle(void* _args) {
 	pthread_mutex_t* num_queues_mutex = args->num_queues_mutex;
 	struct amqp_queue* queues = args->queues;
 	// buffer is used for everything so we don't need to worry about memory allocation
-	char buffer[BUFFER_SIZE];
+	unsigned char buffer[BUFFER_SIZE];
 
 	// Check protocol header
-	static const char PROTOCOL_HEADER[8] = {'A', 'M', 'Q', 'P', 0x00, 0x00, 0x09, 0x01};
+	static const unsigned char PROTOCOL_HEADER[8] = {'A', 'M', 'Q', 'P', 0x00, 0x00, 0x09, 0x01};
 	ok_read(connfd, buffer, 8);
 	for(size_t i = 0; i < 8; i++) {
 		if(buffer[i] != PROTOCOL_HEADER[i]) {
@@ -39,7 +39,7 @@ void* handle(void* _args) {
 
 		ssize_t n = *num_queues;
 		ssize_t queue_name_len = frame.size - 12;
-		char* name = &buffer[7];
+		unsigned char* name = &buffer[7];
 		name[queue_name_len] = '\0';
 
 		// Check if there's already a queue with that name
@@ -63,7 +63,7 @@ void* handle(void* _args) {
 			buffer[2] == 0x00 && buffer[3] == 0x28 // PUBLISH
 	) {
 		ssize_t queue_name_len = frame.size - 9;
-		char* name = &buffer[8];
+		unsigned char* name = &buffer[8];
 		name[queue_name_len] = '\0';
 
 		pthread_mutex_lock(num_queues_mutex);
@@ -86,7 +86,7 @@ void* handle(void* _args) {
 
 		frame = read_frame(buffer, connfd);
 		ok_read(connfd, buffer, frame.size + 1); // Ignoring the Content Header
-		char* message = malloc(frame.size);
+		unsigned char* message = malloc(frame.size);
 		memcpy(message, buffer, frame.size);
 
 		// message is moved
@@ -100,7 +100,7 @@ void* handle(void* _args) {
 			buffer[2] == 0x00 && buffer[3] == 0x14 // CONSUME
 	){ 
 		ssize_t queue_name_len = frame.size - 13;
-		char *name = &buffer[7];
+		unsigned char *name = &buffer[7];
 		name[queue_name_len] = '\0';
 
 		pthread_mutex_lock(num_queues_mutex);
@@ -119,7 +119,7 @@ void* handle(void* _args) {
 		struct amqp_queue* queue = &queues[queue_id];
 
 		// Just write the same consumer_tag for simplicity
-		static const char* BASIC_CONSUME_OK = 
+		static const unsigned char* BASIC_CONSUME_OK = 
 "\x01\x00\x01\x00\x00\x00\x24\x00\x3c\x00\x15\x1f\x61\x6d\x71\x2e" \
 "\x63\x74\x61\x67\x2d\x5f\x62\x4c\x75\x56\x79\x32\x4f\x79\x61\x6c" \
 "\x6f\x4f\x45\x31\x33\x71\x71\x34\x47\x41\x67\xce";

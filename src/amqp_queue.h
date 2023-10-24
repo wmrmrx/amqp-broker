@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 struct message_node {
-	char* message;
+	unsigned char* message;
 	struct message_node *next;
 };
 
@@ -16,7 +16,7 @@ struct subscriber_node {
 
 // Defines a amqp queue type
 struct amqp_queue {
-	char name[256];
+	unsigned char name[256];
 
 	// Singly Linked List
 	struct message_node* message_queue_head;
@@ -27,8 +27,8 @@ struct amqp_queue {
 };
 
 // Self-documenting names
-void initialize_amqp_queue(struct amqp_queue* queue, char* name);
-void publish_message(struct amqp_queue* queue, char* message);
+void initialize_amqp_queue(struct amqp_queue* queue, unsigned char* name);
+void publish_message(struct amqp_queue* queue, unsigned char* message);
 void distribute_messages(struct amqp_queue* queue);
 void subscribe(struct amqp_queue* queue, int connfd);
 

@@ -2,8 +2,8 @@
 #include "boilerplate.h"
 #include "util.h"
 
-void connection_start_boilerplate(char* buffer, int connfd) {
-	static const char CONNECTION_START[] = 
+void connection_start_boilerplate(unsigned char* buffer, int connfd) {
+	static const unsigned char CONNECTION_START[] = 
 "\x01\x00\x00\x00\x00\x01\xfc\x00\x0a\x00\x0a\x00\x09\x00\x00\x01" \
 "\xd7\x0c\x63\x61\x70\x61\x62\x69\x6c\x69\x74\x69\x65\x73\x46\x00" \
 "\x00\x00\xc7\x12\x70\x75\x62\x6c\x69\x73\x68\x65\x72\x5f\x63\x6f" \
@@ -43,7 +43,7 @@ void connection_start_boilerplate(char* buffer, int connfd) {
 	struct frame_t frame = read_frame(buffer, connfd);
 	ok_read(connfd, buffer, frame.size + 1);
 
-	static const char CONNECTION_TUNE[] = 
+	static const unsigned char CONNECTION_TUNE[] = 
 "\x01\x00\x00\x00\x00\x00\x0c\x00\x0a\x00\x1e\x07\xff\x00\x02\x00" \
 "\x00\x00\x3c\xce";
 	ok_write(connfd, CONNECTION_TUNE, 20);
@@ -56,7 +56,7 @@ void connection_start_boilerplate(char* buffer, int connfd) {
 	frame = read_frame(buffer, connfd);
 	ok_read(connfd, buffer, frame.size + 1);
 
-	static const char CONNECTION_OPEN_OK[] = 
+	static const unsigned char CONNECTION_OPEN_OK[] = 
 "\x01\x00\x00\x00\x00\x00\x05\x00\x0a\x00\x29\x00\xce";
 	ok_write(connfd, CONNECTION_OPEN_OK, 13);
 
@@ -64,17 +64,17 @@ void connection_start_boilerplate(char* buffer, int connfd) {
 	frame = read_frame(buffer, connfd);
 	ok_read(connfd, buffer, frame.size + 1);
 
-	static const char CHANNEL_OPEN_OK[] = 
+	static const unsigned char CHANNEL_OPEN_OK[] = 
 "\x01\x00\x01\x00\x00\x00\x08\x00\x14\x00\x0b\x00\x00\x00\x00\xce";
 	ok_write(connfd, CHANNEL_OPEN_OK, 16); 
 }
 
-void connection_end_boilerplate(char* buffer, int connfd) {
+void connection_end_boilerplate(unsigned char* buffer, int connfd) {
 	// Ignore Channel.Close
 	struct frame_t frame = read_frame(buffer, connfd);
 	ok_read(connfd, buffer, frame.size + 1);
 
-	static const char CHANNEL_CLOSE_OK[] = 
+	static const unsigned char CHANNEL_CLOSE_OK[] = 
 "\x01\x00\x01\x00\x00\x00\x04\x00\x14\x00\x29\xce";
 	ok_write(connfd, CHANNEL_CLOSE_OK, 12);
 
@@ -82,7 +82,7 @@ void connection_end_boilerplate(char* buffer, int connfd) {
 	frame = read_frame(buffer, connfd);
 	ok_read(connfd, buffer, frame.size + 1);
 
-	static const char CONNECTION_CLOSE_OK[] =
+	static const unsigned char CONNECTION_CLOSE_OK[] =
 "\x01\x00\x00\x00\x00\x00\x04\x00\x0a\x00\x33\xce";
 	ok_write(connfd, CONNECTION_CLOSE_OK, 12);
 }
