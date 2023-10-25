@@ -6,12 +6,12 @@
 #include "amqp_queue.h"
 
 // Misc global variables
-const ssize_t BUFFER_SIZE = 4096;
+const size_t BUFFER_SIZE = 4096;
 
 void* handle(void* _args) {
 	struct args_t *args = _args;
 	int connfd = args->connfd;
-	ssize_t* num_queues = args->num_queues;
+	size_t* num_queues = args->num_queues;
 	pthread_mutex_t* num_queues_mutex = args->num_queues_mutex;
 	struct amqp_queue* queues = args->queues;
 	// buffer is used for everything so we don't need to worry about memory allocation
@@ -37,14 +37,14 @@ void* handle(void* _args) {
 	) {
 		pthread_mutex_lock(num_queues_mutex);
 
-		ssize_t n = *num_queues;
-		ssize_t queue_name_len = frame.size - 12;
-		unsigned char* name = &buffer[7];
+		size_t n = *num_queues;
+		size_t queue_name_len = frame.size - 12;
+		char* name = (char*) &buffer[7];
 		name[queue_name_len] = '\0';
 
 		// Check if there's already a queue with that name
 		bool found_queue = false;
-		for(ssize_t i=0;i<n;i++) if(strcmp(name, queues[i].name) == 0) {
+		for(size_t i=0;i<n;i++) if(strcmp(name, queues[i].name) == 0) {
 			found_queue = true;
 			break;
 		}
@@ -62,14 +62,14 @@ void* handle(void* _args) {
 	} else if(buffer[0] == 0x00 && buffer[1] == 0x3c && // BASIC
 			buffer[2] == 0x00 && buffer[3] == 0x28 // PUBLISH
 	) {
-		ssize_t queue_name_len = frame.size - 9;
-		unsigned char* name = &buffer[8];
+		size_t queue_name_len = frame.size - 9;
+		char* name = (char*) &buffer[8];
 		name[queue_name_len] = '\0';
 
 		pthread_mutex_lock(num_queues_mutex);
-		ssize_t n = *num_queues;
+		size_t n = *num_queues;
 		pthread_mutex_unlock(num_queues_mutex);
-		ssize_t queue_id;
+		size_t queue_id;
 		for(queue_id = 0; queue_id < n; queue_id++) {
 			if(strcmp(name, queues[queue_id].name) == 0)
 				break;
@@ -90,7 +90,7 @@ void* handle(void* _args) {
 		memcpy(message, buffer, frame.size);
 
 		// message is moved
-		publish_message(queue, message);
+		publish_message(queue, message, frame.size);
 
 		// Cop out and just close the connection for simplicity
 		close(connfd);
@@ -99,14 +99,14 @@ void* handle(void* _args) {
 	} else if(buffer[0] == 0x00 && buffer[1] == 0x3c && // BASIC
 			buffer[2] == 0x00 && buffer[3] == 0x14 // CONSUME
 	){ 
-		ssize_t queue_name_len = frame.size - 13;
-		unsigned char *name = &buffer[7];
+		size_t queue_name_len = frame.size - 13;
+		char *name = (char*) &buffer[7];
 		name[queue_name_len] = '\0';
 
 		pthread_mutex_lock(num_queues_mutex);
-		ssize_t n = *num_queues;
+		size_t n = *num_queues;
 		pthread_mutex_unlock(num_queues_mutex);
-		ssize_t queue_id;
+		size_t queue_id;
 		for(queue_id = 0; queue_id < n; queue_id++) {
 			if(strcmp(name, queues[queue_id].name) == 0)
 				break;
@@ -119,7 +119,7 @@ void* handle(void* _args) {
 		struct amqp_queue* queue = &queues[queue_id];
 
 		// Just write the same consumer_tag for simplicity
-		static const unsigned char* BASIC_CONSUME_OK = 
+		static const unsigned char* BASIC_CONSUME_OK = (unsigned char*)
 "\x01\x00\x01\x00\x00\x00\x24\x00\x3c\x00\x15\x1f\x61\x6d\x71\x2e" \
 "\x63\x74\x61\x67\x2d\x5f\x62\x4c\x75\x56\x79\x32\x4f\x79\x61\x6c" \
 "\x6f\x4f\x45\x31\x33\x71\x71\x34\x47\x41\x67\xce";

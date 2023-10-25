@@ -48,14 +48,14 @@
 #include "util.h"
 
 struct distributor_args_t {
-    ssize_t* num_queues;
+    size_t* num_queues;
     pthread_mutex_t* num_queues_mutex;
     struct amqp_queue* queues;
 };
 
 // Distribute messages between consumers for each queue
 void* distributor(void* args) {
-    ssize_t* num_queues = ((struct distributor_args_t*) args)->num_queues;
+    size_t* num_queues = ((struct distributor_args_t*) args)->num_queues;
     pthread_mutex_t* num_queues_mutex = ((struct distributor_args_t*) args)->num_queues_mutex;
     struct amqp_queue* queues = ((struct distributor_args_t*) args)->queues;
     for(;;) {
@@ -74,7 +74,7 @@ void* distributor(void* args) {
 #define MAXDATASIZE 100
 #define MAXLINE 4096
 
-int main (int argc, unsigned char **argv) {
+int main (int argc, char **argv) {
     /* Os sockets. Um que será o socket que vai escutar pelas conexões
      * e o outro que vai ser o socket específico de cada conexão
      */
@@ -144,7 +144,7 @@ int main (int argc, unsigned char **argv) {
     // ALTERAÇÃO EP1
 
     const size_t MAX_QUEUES = 1024;
-    ssize_t num_queues = 0;
+    size_t num_queues = 0;
     pthread_mutex_t num_queues_mutex;
     pthread_mutex_init(&num_queues_mutex, NULL);
     struct amqp_queue queues[MAX_QUEUES];

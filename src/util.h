@@ -8,7 +8,7 @@
 // Type only used in function handler because of pthread constraints
 struct args_t {
     int connfd;
-    ssize_t* num_queues;
+    size_t* num_queues;
     pthread_mutex_t* num_queues_mutex;
     struct amqp_queue* queues;
 };
@@ -16,12 +16,12 @@ struct args_t {
 // Functions for writing and reading safely
 
 // Returns -1 in case of failure
-int try_write(int fd, const unsigned char* buffer, ssize_t size);
-void ok_write(int fd, const unsigned char* buffer, ssize_t size);
+int try_write(int fd, const unsigned char* buffer, size_t size);
+void ok_write(int fd, const unsigned char* buffer, size_t size);
 
 // Returns -1 in case of failure
-int try_read(int fd, unsigned char* buffer, sssize_t size);
-void ok_read(int fd, unsigned char* buffer, ssize_t size);
+int try_read(int fd, unsigned char* buffer, size_t size);
+void ok_read(int fd, unsigned char* buffer, size_t size);
 
 // Functions to deal with frames
 struct frame_t {
