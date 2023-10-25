@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wshadow -pedantic -g -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUGPEDANTIC -fsanitize=address,undefined
+CFLAGS = -Wall -Wextra -Wshadow -pedantic -g -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUGPEDANTIC -fsanitize=undefined,thread
 # CFLAGS = -Wall -Wextra -Wshadow -pedantic -g
 
 SRC_FILES = $(wildcard *.c)

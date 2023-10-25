@@ -11,7 +11,6 @@ void initialize_amqp_queue(struct amqp_queue* queue, char* name) {
 	queue->message_queue_head = NULL;
 	queue->subscriber_node_head = NULL;
 	pthread_mutex_init(&queue->mutex, NULL);
-	printf("Initialized queue %s\n", queue->name);
 }
 
 void publish_message(struct amqp_queue* queue, unsigned char* message, size_t message_len) {
@@ -22,7 +21,6 @@ void publish_message(struct amqp_queue* queue, unsigned char* message, size_t me
 	new_head->next = queue->message_queue_head;
 	queue->message_queue_head = new_head;
 	pthread_mutex_unlock(&queue->mutex);
-	printf("Published message %s in queue %s\n", message, queue->name);
 }
 
 void unsubscribe(struct subscriber_node** node_ptr) {
@@ -36,8 +34,6 @@ void unsubscribe(struct subscriber_node** node_ptr) {
 		node->next->prev = node->prev;
 		*node_ptr = node->next;
 	}
-
-	printf("Unsubscribed node %d!\n", node->connfd);
 
 	close(node->connfd);
 	free(node);
@@ -53,7 +49,6 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 			return -1;
 	size_t msg_len = msg_node->message_len;
 
-	printf("Tentando %s", msg_node->message);
 
 	static unsigned char buffer[4096]; // Ok to do this because only one thread is in charge of distributing messages
 	bool err = false;
@@ -65,7 +60,7 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 	"\x00\x00\x01\x00\x00\x02\x71\x31\xce";
 
 		// Now write message to subscriber
-		if( write((*head)->connfd, BASIC_DELIVER, 57) != 57 ) {
+		if( try_write((*head)->connfd, BASIC_DELIVER, 57) == -1 ) {
 			err = true;
 			break;
 		}
@@ -83,7 +78,7 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 		buffer[16] = (unsigned char) (msg_len >> 16);
 		buffer[17] = (unsigned char) (msg_len >> 8 );
 		buffer[18] = (unsigned char) (msg_len      );
-		if( write((*head)->connfd, buffer, 23) != 23 ) {
+		if( try_write((*head)->connfd, buffer, 23) == -1 ) {
 			err = true;
 			break;
 		}
@@ -98,15 +93,14 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 		buffer[6] = (unsigned char) (msg_len      );
 		memcpy(buffer + 7, msg_node->message, msg_len);
 		buffer[7 + msg_len] = 0xce;
-		if( write((*head)->connfd, buffer, msg_len + 8) != (ssize_t) msg_len + 8 ) {
-			printf("wow\n");
+		if( try_write((*head)->connfd, buffer, msg_len + 8) == -1 ) {
 			err = true;
 			break;
 		}
 
 		// Read Basic.ACK
 		struct frame_t ret;
-		if( read((*head)->connfd, buffer, 7) != 7 ) {
+		if( try_read((*head)->connfd, buffer, 7) == -1 ) {
 			err = true;
 			break;
 		}
@@ -117,7 +111,7 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 			   (((uint32_t) buffer[4]) << 16) +
 			   (((uint32_t) buffer[5]) << 8)  +
 			   (((uint32_t) buffer[6]));
-		if( read((*head)->connfd, buffer, ret.size + 1) != ret.size + 1 ) {
+		if( try_read((*head)->connfd, buffer, ret.size + 1) == -1 ) {
 			err = true; 
 			break;
 		}
@@ -127,7 +121,6 @@ int round_robin(struct message_node* msg_node, struct subscriber_node** head) {
 
 	// Read the Basic.ACK, if there isn't unsubscribe the current node
 	if(err) {
-		printf("Errou!\n");
 		unsubscribe(head);
 		if(*head == NULL) 
 			return -1;
@@ -163,7 +156,5 @@ void subscribe(struct amqp_queue* queue, int connfd) {
 	}
 
 	pthread_mutex_unlock(&queue->mutex);
-
-	printf("Subscribed %d to %s\n", connfd, queue->name);
 }
 

@@ -43,6 +43,7 @@
 // ALTERAÇÃO EP1
 #include <stdatomic.h>
 #include <pthread.h>
+#include <signal.h>
 #include "handler.h"
 #include "amqp_queue.h"
 #include "util.h"
@@ -142,6 +143,8 @@ int main (int argc, char **argv) {
      */
 
     // ALTERAÇÃO EP1
+    // Para o programa não ser interrompido caso um cliente seja desconectado
+    signal(SIGPIPE, SIG_IGN);
 
     const size_t MAX_QUEUES = 1024;
     size_t num_queues = 0;
