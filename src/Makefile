@@ -1,6 +1,7 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wshadow -pedantic -g -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUGPEDANTIC -fsanitize=undefined,thread
-# CFLAGS = -Wall -Wextra -Wshadow -pedantic -g
+# Flags de debug
+# CFLAGS = -Wall -Wextra -Wshadow -pedantic -g -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUGPEDANTIC -fsanitize=undefined,thread
+CFLAGS = -O2 
 
 SRC_FILES = $(wildcard *.c)
 OBJ_FILES = $(SRC_FILES:.c=.o)

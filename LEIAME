@@ -1,0 +1,10 @@
+# COMANDOS
+
+make build
+	compila o programa e o devolve no binário `broker` na pasta raiz do projeto
+
+make docker
+	roda um container docker busybox que roda o binário na porta PORT (por padrão 5672)
+
+make rabbitmq
+	roda o container do rabbitmq
